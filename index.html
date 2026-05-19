@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Axis - Structured Apartment with Custom Ceiling</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ----------------------------------------------------------------- */
+        /* 🎨 تنسيق الواجهة والأزرار العصرية المعتمدة                        */
+        /* ----------------------------------------------------------------- */
+        .interface-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .interactive {
+            pointer-events: auto;
+        }
+
+        #welcome-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(24, 24, 27, 0.85);
+            color: white;
+            padding: 25px 40px;
+            text-align: center;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+            max-width: 85%;
+        }
+
+        #welcome-overlay h1 { font-size: 1.8rem; margin: 0 0 10px 0; }
+        #welcome-overlay p { font-size: 1rem; margin: 0; color: #e4e4e7; }
+
+        .control-panel {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.92);
+            border-radius: 20px;
+            padding: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background-color: #f4f4f5;
+            border: 1px solid #e4e4e7;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.4rem;
+            color: #27272a;
+            cursor: pointer;
+            transition: background-color 0.1s, transform 0.05s;
+            width: 50px;
+            height: 50px;
+        }
+
+        .btn:active {
+            background-color: #38bdf8;
+            color: white;
+            transform: scale(0.95);
+        }
+
+        #movement-panel {
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .row { display: flex; gap: 10px; }
+        #altitude-panel { left: 20px; top: 50%; transform: translateY(-50%); flex-direction: column; }
+        #rotation-panel { right: 20px; top: 50%; transform: translateY(-50%); flex-direction: column; }
+
+        .top-btn { position: absolute; top: 20px; background-color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        #btn-save { left: 20px; }
+        #btn-settings { right: 20px; }
+        .blue-arrow { color: #0284c7; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <a-scene embedded vr-mode-ui="enabled: false">
+        
+        <a-light type="ambient" color="#ffffff" intensity="1.2"></a-light>
+        <a-light type="directional" color="#fffbeb" intensity="0.6" position="5 10 2"></a-light>
+
+        <a-entity id="camera-rig" position="0 0.2 7">
+            <a-entity id="main-camera" camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: true">
+                <a-ellipse position="0 0 -1" radius-x="0.008" radius-y="0.008" color="#ef4444"></a-ellipse>
+            </a-entity>
+        </a-entity>
+
+        <a-plane color="#fefaf6" rotation="90 0 0" position="0 3 0" width="30" height="30" material="shader: flat;"></a-plane>
+
+        <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" 
+                 material="shader: flat; color: #f5f5f4; src: url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><rect width='40' height='40' fill='%23ffffff'/><rect x='40' width='40' height='40' fill='%23eae8e4'/><rect y='40' width='40' height='40' fill='%23eae8e4'/><rect x='40' y='40' width='40' height='40' fill='%23ffffff'/><path d='M0 0h80v80H0z' fill='none' stroke='%23d6d3d1' stroke-width='1'/></svg>); repeat: 30 30;">
+        </a-plane>
+        
+        <a-box id="outer-wall-back" position="0 1.5 -10" width="16" height="3" depth="0.1" color="#fafaf9" material="shader: flat;"></a-box>
+        <a-box id="outer-wall-front" position="0 1.5 10" width="16" height="3" depth="0.1" color="#fafaf9" material="shader: flat;"></a-box>
+        <a-box id="outer-wall-left" position="-8 1.5 0" width="0.1" height="3" depth="20" color="#fafaf9" material="shader: flat;"></a-box>
+        <a-box id="outer-wall-right" position="8 1.5 0" width="0.1" height="3" depth="20" color="#fafaf9" material="shader: flat;"></a-box>
+
+        <a-box id="lounge-wall-left" position="-4.75 1.5 5" width="6.5" height="3" depth="0.1" color="#fef08a" material="shader: flat;"></a-box>
+        <a-box id="lounge-wall-right" position="4.75 1.5 5" width="6.5" height="3" depth="0.1" color="#fef08a" material="shader: flat;"></a-box>
+
+        <a-box id="corridor-left-p1" position="-1.5 1.5 4" width="0.1" height="3" depth="2" color="#fef08a" material="shader: flat;"></a-box>
+        <a-box id="corridor-left-p2" position="-1.5 1.5 1" width="0.1" height="3" depth="2" color="#fef08a" material="shader: flat;"></a-box>
+        <a-box id="corridor-left-p3" position="-1.5 1.5 -3" width="0.1" height="3" depth="2" color="#fef08a" material="shader: flat;"></a-box>
+        <a-box id="corridor-left-p4" position="-1.5 1.5 -7.5" width="0.1" height="3" depth="3.5" color="#fef08a" material="shader: flat;"></a-box>
+
+        <a-box id="corridor-right-p1" position="1.5 1.5 4" width="0.1" height="3" depth="2" color="#fca5a5" material="shader: flat;"></a-box>
+        <a-box id="corridor-right-p2" position="1.5 1.5 1" width="0.1" height="3" depth="2" color="#fca5a5" material="shader: flat;"></a-box>
+        <a-box id="corridor-right-p3" position="1.5 1.5 -3" width="0.1" height="3" depth="2" color="#fca5a5" material="shader: flat;"></a-box>
+        <a-box id="corridor-right-p4" position="1.5 1.5 -7.5" width="0.1" height="3" depth="3.5" color="#fca5a5" material="shader: flat;"></a-box>
+
+        <a-box position="-4.75 1.5 -6" width="6.5" height="3" depth="0.1" color="#f7fee7" material="shader: flat;"></a-box>
+        <a-box position="-4.75 1.5 -2" width="6.5" height="3" depth="0.1" color="#f7fee7" material="shader: flat;"></a-box>
+        <a-box position="-4.75 1.5 2" width="6.5" height="3" depth="0.1" color="#f0f9ff" material="shader: flat;"></a-box>
+
+        <a-box position="4.75 1.5 -6" width="6.5" height="3" depth="0.1" color="#fafaf9" material="shader: flat;"></a-box>
+        <a-box position="4.75 1.5 -2" width="6.5" height="3" depth="0.1" color="#fafaf9" material="shader: flat;"></a-box>
+        <a-box position="4.75 1.5 2" width="6.5" height="3" depth="0.1" color="#fef2f2" material="shader: flat;"></a-box>
+
+    </a-scene>
+
+    <div class="interface-layer">
+        <div id="btn-save" class="btn top-btn interactive">💾</div>
+        <div id="btn-settings" class="btn top-btn interactive">⚙️</div>
+
+        <div id="welcome-overlay" class="interactive" onclick="alert('فتح وثيقة عقد الإيجار الذكي...')">
+            <h1>Welcome to 3D Axis!</h1>
+            <p>Click here to view Tenant Agreement</p>
+        </div>
+
+        <div id="altitude-panel" class="control-panel interactive">
+            <div class="btn" id="move-up">▲</div>
+            <div class="btn" id="move-down">▼</div>
+        </div>
+
+        <div id="rotation-panel" class="control-panel interactive">
+            <div class="btn" id="rotate-left">↶</div>
+            <div class="btn" id="rotate-right">↷</div>
+        </div>
+
+        <div id="movement-panel" class="control-panel interactive">
+            <div class="row">
+                <div class="btn blue-arrow" id="turn-left">↴</div>
+                <div class="btn blue-arrow" id="turn-right">↳</div>
+            </div>
+            <div class="row" style="margin-top: 5px;">
+                <div class="btn" id="move-forward">▲</div>
+            </div>
+            <div class="row" style="margin-top: 5px;">
+                <div class="btn blue-arrow" id="strafe-left">◀</div>
+                <div class="btn" id="move-back">▼</div>
+                <div class="btn blue-arrow" id="strafe-right">▶</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cameraRig = document.getElementById('camera-rig');
+        const mainCamera = document.getElementById('main-camera');
+
+        const moveSpeed = 0.14;
+        const rotateSpeed = 2.8; 
+        const cameraRadius = 0.4; 
+
+        let activeInterval = null;
+
+        // دالة الفحص الحدودية لحماية الاصطدام (تعمل بالتوافق التام والكامل مع الفتحات الهندسية للأبواب)
+        function isPositionSafe(nextX, nextZ) {
+            
+            if (nextX + cameraRadius >= 8 || nextX - cameraRadius <= -8) return false;
+            if (nextZ + cameraRadius >= 10 || nextZ - cameraRadius <= -10) return false;
+
+            if (nextX - cameraRadius <= -1.5 && nextX >= -2.0) {
+                if (!(nextZ > 2.2 && nextZ < 3.8) && !(nextZ > -1.8 && nextZ < -0.2) && !(nextZ > -5.8 && nextZ < -4.2)) {
+                    return false;
+                }
+            }
+            if (nextX + cameraRadius >= 1.5 && nextX <= 2.0) {
+                if (!(nextZ > 2.2 && nextZ < 3.8) && !(nextZ > -1.8 && nextZ < -0.2) && !(nextZ > -5.8 && nextZ < -4.2)) {
+                    return false;
+                }
+            }
+
+            if (Math.abs(nextZ - 5) <= cameraRadius) {
+                if (nextX < -1.5 || nextX > 1.5) return false;
+            }
+
+            if (Math.abs(nextZ - 2) <= cameraRadius || Math.abs(nextZ + 2) <= cameraRadius || Math.abs(nextZ + 6) <= cameraRadius) {
+                if (Math.abs(nextX) > 1.5) return false; 
+            }
+
+            return true; 
+        }
+
+        function startAction(actionFunction) {
+            if (activeInterval) clearInterval(activeInterval);
+            actionFunction(); 
+            activeInterval = setInterval(actionFunction, 40); 
+        }
+
+        function stopAction() {
+            if (activeInterval) {
+                clearInterval(activeInterval);
+                activeInterval = null;
+            }
+        }
+
+        function setupButton(elementId, action) {
+            const btn = document.getElementById(elementId);
+            if (!btn) return;
+            
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); startAction(action); });
+            btn.addEventListener('touchend', stopAction);
+            btn.addEventListener('mousedown', () => startAction(action));
+            btn.addEventListener('mouseup', stopAction);
+            btn.addEventListener('mouseleave', stopAction);
+        }
+
+        setupButton('move-forward', () => {
+            let pos = cameraRig.getAttribute('position');
+            let rot = mainCamera.getAttribute('rotation');
+            let angle = (rot.y * Math.PI) / 180;
+            let nextX = pos.x - Math.sin(angle) * moveSpeed;
+            let nextZ = pos.z - Math.cos(angle) * moveSpeed;
+            if (isPositionSafe(nextX, nextZ)) { pos.x = nextX; pos.z = nextZ; cameraRig.setAttribute('position', pos); }
+        });
+
+        setupButton('move-back', () => {
+            let pos = cameraRig.getAttribute('position');
+            let rot = mainCamera.getAttribute('rotation');
+            let angle = (rot.y * Math.PI) / 180;
+            let nextX = pos.x + Math.sin(angle) * moveSpeed;
+            let nextZ = pos.z + Math.cos(angle) * moveSpeed;
+            if (isPositionSafe(nextX, nextZ)) { pos.x = nextX; pos.z = nextZ; cameraRig.setAttribute('position', pos); }
+        });
+
+        setupButton('strafe-left', () => {
+            let pos = cameraRig.getAttribute('position');
+            let rot = mainCamera.getAttribute('rotation');
+            let angle = ((rot.y + 90) * Math.PI) / 180;
+            let nextX = pos.x - Math.sin(angle) * moveSpeed;
+            let nextZ = pos.z - Math.cos(angle) * moveSpeed;
+            if (isPositionSafe(nextX, nextZ)) { pos.x = nextX; pos.z = nextZ; cameraRig.setAttribute('position', pos); }
+        });
+
+        setupButton('strafe-right', () => {
+            let pos = cameraRig.getAttribute('position');
+            let rot = mainCamera.getAttribute('rotation');
+            let angle = ((rot.y + 90) * Math.PI) / 180;
+            let nextX = pos.x + Math.sin(angle) * moveSpeed;
+            let nextZ = pos.z + Math.cos(angle) * moveSpeed;
+            if (isPositionSafe(nextX, nextZ)) { pos.x = nextX; pos.z = nextZ; cameraRig.setAttribute('position', pos); }
+        });
+
+        setupButton('move-up', () => {
+            let pos = cameraRig.getAttribute('position');
+            if(pos.y < 2.3) { pos.y += moveSpeed; cameraRig.setAttribute('position', pos); }
+        });
+
+        setupButton('move-down', () => {
+            let pos = cameraRig.getAttribute('position');
+            if(pos.y > 0.1) { pos.y -= moveSpeed; cameraRig.setAttribute('position', pos); }
+        });
+
+        setupButton('rotate-left', () => { let rot = mainCamera.getAttribute('rotation'); rot.y += rotateSpeed; mainCamera.setAttribute('rotation', rot); });
+        setupButton('rotate-right', () => { let rot = mainCamera.getAttribute('rotation'); rot.y -= rotateSpeed; mainCamera.setAttribute('rotation', rot); });
+        setupButton('turn-left', () => { let rot = mainCamera.getAttribute('rotation'); rot.y += rotateSpeed * 1.8; mainCamera.setAttribute('rotation', rot); });
+        setupButton('turn-right', () => { let rot = mainCamera.getAttribute('rotation'); rot.y -= rotateSpeed * 1.8; mainCamera.setAttribute('rotation', rot); });
+    </script>
+</body>
+</html>
